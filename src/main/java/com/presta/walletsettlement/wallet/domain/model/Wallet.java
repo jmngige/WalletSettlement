@@ -24,7 +24,7 @@ public class Wallet {
     private String customerId;
 
     @Column(precision = 15, scale = 2)
-    private BigDecimal amount;
+    private BigDecimal balance;
 
     @Enumerated(EnumType.STRING)
     @Column(unique = true, nullable = false)
