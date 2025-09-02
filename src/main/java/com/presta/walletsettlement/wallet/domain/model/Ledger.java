@@ -22,6 +22,9 @@ public class Ledger {
     private Long id;
 
     @Column(nullable = false)
+    private Long walletId;
+
+    @Column(nullable = false)
     private String customerId;
 
     @Column(precision = 15, scale = 2)
