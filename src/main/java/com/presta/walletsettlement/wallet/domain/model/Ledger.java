@@ -1,5 +1,7 @@
 package com.presta.walletsettlement.wallet.domain.model;
 
+import com.presta.walletsettlement.wallet.domain.enums.TransactionSource;
+import com.presta.walletsettlement.wallet.domain.enums.TransactionStatus;
 import com.presta.walletsettlement.wallet.domain.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -31,7 +33,21 @@ public class Ledger {
     private TransactionType tranType;
 
     @Column(nullable = false, unique = true)
-    private String transactionId;
+    private String transactionRequestId;
+
+    @Column(nullable = false, unique = true)
+    private String transactionReference;
+
+    @Enumerated(EnumType.STRING)
+    @Column(unique = true, nullable = false)
+    private TransactionSource source;
+
+    @Enumerated(EnumType.STRING)
+    @Column(unique = true, nullable = false)
+    private TransactionStatus status;
+
+    @Column(nullable = false)
+    private String description;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

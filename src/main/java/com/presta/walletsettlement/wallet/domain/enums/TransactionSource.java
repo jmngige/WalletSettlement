@@ -1,6 +1,6 @@
 package com.presta.walletsettlement.wallet.domain.enums;
 
-public enum TransactionType {
-    DEBIT,
-    CREDIT
+public enum TransactionSource {
+    INTERNAL,
+    EXTERNAL
 }
