@@ -1,13 +1,19 @@
 package com.presta.walletsettlement.wallet.domain.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 
+
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Schema(description = "Request to top up a wallet")
 public class TopUpRequest {
 
     @NotBlank(message = "Request ID is required")

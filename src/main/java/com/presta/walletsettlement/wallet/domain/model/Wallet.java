@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "wallets", indexes = {
-        @Index(name = "idx_wallet_customer", columnList = "customerId")
+        @Index(name = "idx_wallet_customer", columnList = "customer_id")
 })
 public class Wallet {
     @Id
@@ -23,17 +23,17 @@ public class Wallet {
     @Column(unique = true, nullable = false)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "customer_id", nullable = false)
     private String customerId;
 
-    @Column(precision = 15, scale = 2, nullable = false)
+    @Column(name = "balance", precision = 15, scale = 2, nullable = false)
     private BigDecimal balance;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false)
     private WalletStatus status;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }

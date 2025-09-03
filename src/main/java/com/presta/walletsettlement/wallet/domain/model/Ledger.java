@@ -16,8 +16,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "ledger_transactions", indexes = {
-        @Index(name = "idx_ledger_wallet", columnList = "walletId"),
-        @Index(name = "idx_ledger_tx_request", columnList = "transactionRequestId")
+        @Index(name = "idx_ledger_wallet", columnList = "wallet_id"),
+        @Index(name = "idx_ledger_tx_request", columnList = "transaction_request_id")
 })
 public class Ledger {
     @Id
@@ -25,34 +25,34 @@ public class Ledger {
     @Column(unique = true, nullable = false)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "wallet_id", nullable = false)
     private Long walletId;
 
-    @Column(nullable = false)
+    @Column(name = "customer_id", nullable = false)
     private String customerId;
 
-    @Column(precision = 15, scale = 2, nullable = false)
+    @Column(name = "amount",precision = 15, scale = 2, nullable = false)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "tran_type",nullable = false)
     private TransactionType tranType;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "transaction_request_id",nullable = false, unique = true)
     private String transactionRequestId;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "trnsaction_reference", nullable = false)
     private String transactionReference;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "source", nullable = false)
     private TransactionSource source;
 
-    @Column(nullable = false)
+    @Column(name = "description", nullable = false)
     private String description;
 
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "transaction_date", nullable = false, updatable = false)
     private LocalDateTime transactionDate;
 
 }
