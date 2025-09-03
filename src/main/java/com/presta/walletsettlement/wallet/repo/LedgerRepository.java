@@ -6,7 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface LedgerRepository extends JpaRepository<Ledger, Long> {
-
     boolean existsByTransactionRequestId(String transactionRequestId);
-
 }

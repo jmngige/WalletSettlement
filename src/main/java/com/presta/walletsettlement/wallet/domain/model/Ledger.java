@@ -6,15 +6,19 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "ledger_transactions")
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(name = "ledger_transactions", indexes = {
+        @Index(name = "idx_ledger_wallet", columnList = "walletId"),
+        @Index(name = "idx_ledger_tx_request", columnList = "transactionRequestId")
+})
 public class Ledger {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,11 +31,11 @@ public class Ledger {
     @Column(nullable = false)
     private String customerId;
 
-    @Column(precision = 15, scale = 2)
+    @Column(precision = 15, scale = 2, nullable = false)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private TransactionType tranType;
 
     @Column(nullable = false, unique = true)
@@ -41,12 +45,13 @@ public class Ledger {
     private String transactionReference;
 
     @Enumerated(EnumType.STRING)
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private TransactionSource source;
 
     @Column(nullable = false)
     private String description;
 
+    @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime transactionDate;
 
