@@ -1,13 +1,12 @@
 package com.presta.walletsettlement.wallet.service;
 
+import com.presta.walletsettlement.rabbbitmq.TransactionMessagePublisher;
 import com.presta.walletsettlement.wallet.domain.dto.LedgerTransaction;
 import com.presta.walletsettlement.wallet.domain.dto.request.ConsumeRequest;
 import com.presta.walletsettlement.wallet.domain.dto.request.TopUpRequest;
 import com.presta.walletsettlement.wallet.domain.dto.response.BalanceResponse;
 import com.presta.walletsettlement.wallet.domain.dto.response.ConsumeResponse;
 import com.presta.walletsettlement.wallet.domain.dto.response.TopUpResponse;
-import com.presta.walletsettlement.wallet.domain.enums.TransactionSource;
-import com.presta.walletsettlement.wallet.domain.enums.TransactionType;
 import com.presta.walletsettlement.wallet.domain.model.Ledger;
 import com.presta.walletsettlement.wallet.domain.model.Wallet;
 import com.presta.walletsettlement.wallet.exception.DuplicateTransactionException;
@@ -21,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Slf4j
@@ -29,14 +29,16 @@ public class WalletService {
 
     private final LedgerRepository ledgerRepository;
     private final WalletRepository walletRepository;
+    private final TransactionMessagePublisher messagePublisher;
 
-    public WalletService(LedgerRepository ledgerRepository, WalletRepository walletRepository) {
+    public WalletService(LedgerRepository ledgerRepository, WalletRepository walletRepository, TransactionMessagePublisher messagePublisher) {
         this.ledgerRepository = ledgerRepository;
         this.walletRepository = walletRepository;
+        this.messagePublisher = messagePublisher;
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public TopUpResponse topUp(Long walletId, @Valid TopUpRequest request) {
+    public TopUpResponse topUp(String walletId, @Valid TopUpRequest request) {
         //prevent reprocessing transactions on retries
         boolean exists = ledgerRepository.existsByTransactionRequestId(request.getRequestId());
         if (exists) {
@@ -44,8 +46,7 @@ public class WalletService {
         }
 
         // Fetch wallet with pessimistic lock
-        Wallet wallet = walletRepository.findByIdWithLock(walletId)
-                .orElseThrow(() -> new WalletNotFoundException("Wallet not found"));
+        Wallet wallet = walletRepository.findByWalletId(walletId).orElseThrow(() -> new WalletNotFoundException("Wallet not found"));
 
         //update wallet balance
         BigDecimal newBalance = wallet.getBalance().add(request.getAmount());
@@ -57,26 +58,24 @@ public class WalletService {
         LedgerTransaction ledgerTxn = LedgerTransaction.builder()
                 .amount(request.getAmount())
                 .walletId(walletId)
-                .customerId(wallet.getCustomerId())
-                .transactionReference(request.getTransactionId())
+                .transactionId(request.getTransactionId())
                 .transactionRequestId(request.getRequestId())
-                .tranType(TransactionType.CREDIT)
-                .source(TransactionSource.EXTERNAL)
                 .description(description)
-                .transactionDate(LocalDateTime.now())
+                .transactionDate(LocalDate.now())
                 .build();
 
         Ledger transaction = createLedgerTransaction(ledgerTxn);
         ledgerRepository.save(transaction);
 
-        //TODO queue the topup on queue
+        //queue the topup on queue
+        messagePublisher.publishTransactionMessage(ledgerTxn);
 
         return new TopUpResponse("Wallet top-up successful", newBalance, "COMPLETED", LocalDateTime.now());
 
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public ConsumeResponse consume(Long walletId, @Valid ConsumeRequest request) {
+    public ConsumeResponse consume(String walletId, @Valid ConsumeRequest request) {
         //prevent reprocessing transactions on retries
         boolean exists = ledgerRepository.existsByTransactionRequestId(request.getRequestId());
         if (exists) {
@@ -84,8 +83,7 @@ public class WalletService {
         }
 
         // Fetch wallet with pessimistic lock
-        Wallet wallet = walletRepository.findByIdWithLock(walletId)
-                .orElseThrow(() -> new WalletNotFoundException("Wallet not found"));
+        Wallet wallet = walletRepository.findByWalletId(walletId).orElseThrow(() -> new WalletNotFoundException("Wallet not found"));
 
         // Check sufficient balance
         if (wallet.getBalance().compareTo(request.getAmount()) < 0) {
@@ -102,32 +100,27 @@ public class WalletService {
         LedgerTransaction ledgerTxn = LedgerTransaction.builder()
                 .amount(request.getAmount())
                 .walletId(walletId)
-                .customerId(request.getCustomerId())
-                .transactionReference(request.getTransactionId())
+                .transactionId(request.getTransactionId())
                 .transactionRequestId(request.getRequestId())
-                .tranType(TransactionType.DEBIT)
-                .source(TransactionSource.INTERNAL)
                 .description(description)
-                .transactionDate(LocalDateTime.now())
+                .transactionDate(LocalDate.now())
                 .build();
 
         Ledger transaction = createLedgerTransaction(ledgerTxn);
         ledgerRepository.save(transaction);
 
-        //TODO  queue the consume on queue
+        //queue the consume on queue
+        messagePublisher.publishTransactionMessage(ledgerTxn);
 
-        return new ConsumeResponse("Request processed successfully", request.getRequestId(), request.getService(), "COMPLETED", LocalDateTime.now());
+        return new ConsumeResponse("Request processed successfully", request.getRequestId(), "COMPLETED", LocalDateTime.now());
     }
 
     private Ledger createLedgerTransaction(LedgerTransaction transaction) {
         Ledger txn = new Ledger();
         txn.setWalletId(transaction.getWalletId());
-        txn.setCustomerId(transaction.getCustomerId());
         txn.setAmount(transaction.getAmount());
-        txn.setTranType(transaction.getTranType());
         txn.setTransactionRequestId(transaction.getTransactionRequestId());
-        txn.setTransactionReference(transaction.getTransactionReference());
-        txn.setSource(transaction.getSource());
+        txn.setTransactionId(transaction.getTransactionId());
         txn.setDescription(transaction.getDescription());
         txn.setTransactionDate(transaction.getTransactionDate());
         return txn;
@@ -136,11 +129,8 @@ public class WalletService {
     @Transactional(readOnly = true)
     public BalanceResponse getBalance(Long id) {
         return walletRepository.findById(id)
-                .map(wallet -> new BalanceResponse(
-                        wallet.getId(),
-                        wallet.getCustomerId(),
-                        wallet.getBalance()
-                ))
+                .map(wallet ->
+                        new BalanceResponse(wallet.getId(), wallet.getBalance()))
                 .orElseThrow(() -> new WalletNotFoundException("Wallet not found"));
     }
 }

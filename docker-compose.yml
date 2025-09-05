@@ -20,21 +20,55 @@ services:
       retries: 10
       interval: 10s
 
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbit_user
+      RABBITMQ_DEFAULT_PASS: rabbit_password
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - wallet-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      timeout: 30s
+      retries: 3
+      interval: 10s
+    restart: unless-stopped
+
   wallet-app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: wallet-app
     environment:
+      # Database Configs
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/wallet_db?allowPublicKeyRetrieval=true&useSSL=false
       SPRING_DATASOURCE_USERNAME: wallet_user
       SPRING_DATASOURCE_PASSWORD: wallet_password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQL8Dialect
+      #Rabbit Configs
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: rabbit_user
+      SPRING_RABBITMQ_PASSWORD: rabbit_password
+      SPRING_RABBITMQ_VIRTUAL_HOST: /
+      # Custom Rabbit config
+      RABBIT_EXCHANGE_NAME: txn_exchange
+      RABBIT_QUEUE_NAME: txns_queue
+      RABBIT_ROUTING_KEY: txns_routing_key
     ports:
       - "8085:8085"
     depends_on:
       mysql:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - wallet-network
@@ -42,6 +76,7 @@ services:
 
 volumes:
   mysql_data:
+  rabbitmq_data:
 
 networks:
   wallet-network:

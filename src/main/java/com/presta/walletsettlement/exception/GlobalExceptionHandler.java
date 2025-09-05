@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import java.io.FileNotFoundException;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.stream.Collectors;

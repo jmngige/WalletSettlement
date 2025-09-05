@@ -25,7 +25,4 @@ public class TopUpRequest {
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than zero")
     private BigDecimal amount;
-
-    @NotBlank(message = "Provider is required")
-    private String provider;
 }

@@ -1,23 +1,19 @@
 package com.presta.walletsettlement.wallet.domain.dto;
 
-import com.presta.walletsettlement.wallet.domain.enums.TransactionSource;
-import com.presta.walletsettlement.wallet.domain.enums.TransactionType;
 import lombok.Builder;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @Builder
 public class LedgerTransaction {
-    private Long walletId;
-    private String customerId;
+    private String walletId;
     private BigDecimal amount;
-    private TransactionType tranType;
+    private String type;
     private String transactionRequestId;
-    private String transactionReference;
-    private TransactionSource source;
+    private String transactionId;
     private String description;
-    private LocalDateTime transactionDate;
+    private LocalDate transactionDate;
 }

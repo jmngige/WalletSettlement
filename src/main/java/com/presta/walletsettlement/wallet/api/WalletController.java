@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("api/v1/wallets")
+@RequestMapping("wallets")
 @Tag(name = "Wallet API", description = "API for managing wallet operations")
 public class WalletController {
 
@@ -33,7 +33,7 @@ public class WalletController {
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
             @ApiResponse(responseCode = "404", description = "Wallet not found")
     })
-    public ResponseEntity<TopUpResponse> topUp(@PathVariable("id") Long id, @Valid @RequestBody TopUpRequest request) {
+    public ResponseEntity<TopUpResponse> topUp(@PathVariable("id") String id, @Valid @RequestBody TopUpRequest request) {
         TopUpResponse response = walletService.topUp(id, request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -45,7 +45,7 @@ public class WalletController {
             @ApiResponse(responseCode = "400", description = "Invalid request data or insufficient balance"),
             @ApiResponse(responseCode = "404", description = "Wallet not found")
     })
-    public ResponseEntity<ConsumeResponse> consume(@PathVariable("id") Long id, @Valid @RequestBody ConsumeRequest request) {
+    public ResponseEntity<ConsumeResponse> consume(@PathVariable("id") String id, @Valid @RequestBody ConsumeRequest request) {
         ConsumeResponse response = walletService.consume(id, request);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
