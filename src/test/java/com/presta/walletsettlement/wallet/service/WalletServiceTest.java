@@ -153,8 +153,8 @@ class WalletServiceTest {
 
     @Test
     void getBalance_success_returnsBalance() {
-        when(walletRepository.findById(1L)).thenReturn(java.util.Optional.of(wallet));
-        var resp = walletService.getBalance(1L);
+        when(walletRepository.findByWalletId("WLT-001")).thenReturn(java.util.Optional.of(wallet));
+        var resp = walletService.getBalance("WLT-001");
         assertNotNull(resp);
         assertEquals(1L, resp.walletId());
         assertEquals(0, resp.balance().compareTo(new BigDecimal("100.00")));
@@ -162,8 +162,8 @@ class WalletServiceTest {
 
     @Test
     void getBalance_walletNotFound_throws() {
-        when(walletRepository.findById(2L)).thenReturn(java.util.Optional.empty());
-        assertThrows(WalletNotFoundException.class, () -> walletService.getBalance(2L));
+        when(walletRepository.findByWalletId("WLT-002")).thenReturn(java.util.Optional.empty());
+        assertThrows(WalletNotFoundException.class, () -> walletService.getBalance("WLT-002"));
     }
 
 }

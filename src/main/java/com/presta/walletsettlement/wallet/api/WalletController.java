@@ -56,7 +56,7 @@ public class WalletController {
             @ApiResponse(responseCode = "200", description = "Successfully retrieved balance"),
             @ApiResponse(responseCode = "404", description = "Wallet not found")
     })
-    public ResponseEntity<BalanceResponse> getBalance(@PathVariable("id") Long id) {
+    public ResponseEntity<BalanceResponse> getBalance(@PathVariable("id") String id) {
         BalanceResponse response = walletService.getBalance(id);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

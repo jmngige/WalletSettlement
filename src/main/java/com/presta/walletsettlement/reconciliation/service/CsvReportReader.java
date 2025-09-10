@@ -6,11 +6,13 @@ import com.presta.walletsettlement.reconciliation.domain.ReconciliationTransacti
 import com.presta.walletsettlement.wallet.exception.ReconFIleNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +26,9 @@ public class CsvReportReader {
 
     public Map<String, ReconciliationTransaction> readCsvReport(String fileName) {
         Map<String, ReconciliationTransaction> reportData = new HashMap<>();
-        try (CSVReader csvReader = new CSVReader(new FileReader(filePath + fileName))) {
+
+        Resource resource = new ClassPathResource("reconfiles/" + fileName);
+        try (CSVReader csvReader = new CSVReader(new InputStreamReader(resource.getInputStream()))) {
             // Skip header
             csvReader.skip(1);
 
@@ -37,7 +41,6 @@ public class CsvReportReader {
                 }
 
                 String transactionId = parts[0].trim();
-                // Validate transactionId
                 if (transactionId.isEmpty()) {
                     System.err.println("Skipping row with empty transactionId");
                     continue;
@@ -51,7 +54,7 @@ public class CsvReportReader {
                     continue;
                 }
 
-                // Infer type from transactionId
+                // get type from transactionId
                 String type = resolveType(transactionId);
 
                 reportData.put(transactionId, ReconciliationTransaction.builder()
@@ -60,11 +63,9 @@ public class CsvReportReader {
                         .type(type)
                         .build());
             }
-        }
-        catch (FileNotFoundException e){
+        } catch (FileNotFoundException e) {
             throw new ReconFIleNotFoundException("Reconciliation file " + fileName + " for selected not found for processing.");
-        }
-        catch (IOException | CsvValidationException e) {
+        } catch (IOException | CsvValidationException e) {
             throw new RuntimeException("Error reading reconciliation CSV file: " + filePath, e);
         }
         return reportData;

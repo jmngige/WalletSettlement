@@ -126,9 +126,9 @@ public class WalletService {
         return txn;
     }
 
-    @Transactional(readOnly = true)
-    public BalanceResponse getBalance(Long id) {
-        return walletRepository.findById(id)
+    public BalanceResponse getBalance(String id) {
+        log.info("wallet id {}", id);
+        return walletRepository.findByWalletId(id)
                 .map(wallet ->
                         new BalanceResponse(wallet.getId(), wallet.getBalance()))
                 .orElseThrow(() -> new WalletNotFoundException("Wallet not found"));

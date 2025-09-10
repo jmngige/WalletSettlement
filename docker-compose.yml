@@ -63,6 +63,9 @@ services:
       RABBIT_EXCHANGE_NAME: txn_exchange
       RABBIT_QUEUE_NAME: txns_queue
       RABBIT_ROUTING_KEY: txns_routing_key
+      #Reports output path
+      REPORTS_INPUT_PATH: /app/reconfiles
+      REPORTS_OUTPUT_PATH: /app/reports
     ports:
       - "8085:8085"
     depends_on:
@@ -70,6 +73,9 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    volumes:
+      - ./src/main/resources/reconfiles:/app/reconfiles
+      - ${REPORTS_OUTPUT_PATH_HOST}:/app/reports:rw
     networks:
       - wallet-network
     restart: unless-stopped

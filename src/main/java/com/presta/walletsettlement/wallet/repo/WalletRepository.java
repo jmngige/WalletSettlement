@@ -12,7 +12,6 @@ import java.util.Optional;
 @Repository
 public interface WalletRepository extends JpaRepository<Wallet, Long> {
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT w FROM Wallet w WHERE w.walletId = :walletId")
     Optional<Wallet> findByWalletId(String walletId);
 }

@@ -88,6 +88,7 @@ public class ReconciliationService {
         // Construct output file path
         String outputFileName = "reconciliation_" + date + ".csv";
         String outputFilePath = outputDirPath + File.separator + outputFileName;
+
         File outputDir = new File(outputDirPath);
         if (!outputDir.exists() && !outputDir.mkdirs()) {
             log.error("Failed to create output directory: {}", outputDirPath);
