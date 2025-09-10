@@ -13,10 +13,10 @@ public class TransactionMessagePublisher {
     private final RabbitTemplate rabbitTemplate;
 
     @Value("${rabbit.exchange.name}")
-    private String exchangeName;
+    public String exchangeName;
 
     @Value("${rabbit.routing.key}")
-    private String routingKey;
+    public String routingKey;
 
     public TransactionMessagePublisher(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;

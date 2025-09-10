@@ -11,7 +11,6 @@ import java.time.LocalDate;
 public class LedgerTransaction {
     private String walletId;
     private BigDecimal amount;
-    private String type;
     private String transactionRequestId;
     private String transactionId;
     private String description;

@@ -3,7 +3,6 @@ package com.presta.walletsettlement.reconciliation.service;
 import com.opencsv.CSVWriter;
 import com.presta.walletsettlement.reconciliation.domain.ReconciliationResultDto;
 import com.presta.walletsettlement.reconciliation.domain.ReconciliationTransaction;
-import com.presta.walletsettlement.wallet.domain.dto.LedgerTransaction;
 import com.presta.walletsettlement.wallet.domain.model.Ledger;
 import com.presta.walletsettlement.wallet.exception.ReconFIleNotFoundException;
 import com.presta.walletsettlement.wallet.repo.LedgerRepository;
@@ -14,10 +13,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,76 +31,73 @@ public class ReconciliationService {
     }
 
     public List<ReconciliationResultDto> reconcile(String date) throws ReconFIleNotFoundException {
-            List<Ledger> internalTxns = ledgerRepository.findAllByTransactionDate(date);
+        List<Ledger> internalTxns = ledgerRepository.findAllByTransactionDate(date);
 
-            // Map internal transactions to ReconciliationTransaction for matching
-            List<ReconciliationTransaction> internalList = internalTxns.stream()
-                    .map(t -> {
-                        String type = csvReportReader.resolveType(t.getTransactionId());
-                        return ReconciliationTransaction.builder()
-                                .transactionId(t.getTransactionId())
-                                .amount(t.getAmount())
-                                .type(type)
-                                .build();
-                    })
-                    .toList();
+        // Map internal transactions to ReconciliationTransaction for matching
+        List<ReconciliationTransaction> internalList = internalTxns.stream()
+                .map(t -> {
+                    String type = csvReportReader.resolveType(t.getTransactionId());
+                    return ReconciliationTransaction.builder()
+                            .transactionId(t.getTransactionId())
+                            .amount(t.getAmount())
+                            .type(type)
+                            .build();
+                })
+                .toList();
 
-            // Load external transactions report
-            String fileName = "transaction_report_" + date + ".csv";
-            Map<String, ReconciliationTransaction> externalTxnMap = new LinkedHashMap<>(csvReportReader.readCsvReport(fileName));
+        // Load external transactions report
+        String fileName = "transaction_report_" + date + ".csv";
+        Map<String, ReconciliationTransaction> externalTxnMap = new LinkedHashMap<>(csvReportReader.readCsvReport(fileName));
 
-            List<ReconciliationResultDto> result = new ArrayList<>(internalList.size() + externalTxnMap.size());
+        List<ReconciliationResultDto> result = new ArrayList<>(internalList.size() + externalTxnMap.size());
 
-            // check from internal vs external report
-            for (ReconciliationTransaction internal : internalList) {
-                ReconciliationTransaction external = externalTxnMap.remove(internal.getTransactionId()); // remove if found
-                if (external != null) {
-                    if (internal.getAmount().compareTo(external.getAmount()) == 0) {
-                        String status = "Match";
-                        String description = "successful match";
-                        result.add(toDto(internal, status, description));
-                        result.add(toDto(external, status, description));
-                    } else {
-                        String status = "Exception";
-                        String description = internal.getType() + " transaction amount mismatch";
-                        result.add(toDto(internal, status, description));
-                        result.add(toDto(external, status, description));
-                    }
+        // check from internal vs external report
+        for (ReconciliationTransaction internal : internalList) {
+            ReconciliationTransaction external = externalTxnMap.remove(internal.getTransactionId()); // remove if found
+            if (external != null) {
+                if (internal.getAmount().compareTo(external.getAmount()) == 0) {
+                    String status = "Match";
+                    String description = "successful match";
+                    result.add(toDto(internal, status, description));
+                    result.add(toDto(external, status, description));
                 } else {
                     String status = "Exception";
-                    String description = "Missing external " + internal.getType() + " transaction";
+                    String description = internal.getType() + " transaction amount mismatch";
                     result.add(toDto(internal, status, description));
+                    result.add(toDto(external, status, description));
                 }
-            }
-
-            // process any remaining external transactions missing in internal
-            for (ReconciliationTransaction externalRemaining : externalTxnMap.values()) {
+            } else {
                 String status = "Exception";
-                String description = "Missing internal " + externalRemaining.getType() + " transaction";
-                result.add(toDto(externalRemaining, status, description));
+                String description = "Missing external " + internal.getType() + " transaction";
+                result.add(toDto(internal, status, description));
             }
+        }
 
-            // Sort results by transactionId
-            List<ReconciliationResultDto> sortedResult = result.stream()
-                    .sorted((dto1, dto2) -> dto1.getTransactionId().compareTo(dto2.getTransactionId()))
-                    .collect(Collectors.toList());
+        // process any remaining external transactions missing in internal
+        for (ReconciliationTransaction externalRemaining : externalTxnMap.values()) {
+            String status = "Exception";
+            String description = "Missing internal " + externalRemaining.getType() + " transaction";
+            result.add(toDto(externalRemaining, status, description));
+        }
 
-            // Construct output file path
-            String outputFileName = "reconciliation_" + date + ".csv";
-            String outputFilePath = outputDirPath + File.separator + outputFileName;
-            File outputDir = new File(outputDirPath);
-            if (!outputDir.exists() && !outputDir.mkdirs()) {
-                log.error("Failed to create output directory: {}", outputDirPath);
-                throw new RuntimeException("Failed to create output directory: " + outputDirPath);
-            }
+        // Sort results by transactionId
+        List<ReconciliationResultDto> sortedResult = result.stream()
+                .sorted(Comparator.comparing(ReconciliationResultDto::getTransactionId))
+                .collect(Collectors.toList());
 
-            // Write to CSV
-            writeToCsv(sortedResult, outputFilePath);
+        // Construct output file path
+        String outputFileName = "reconciliation_" + date + ".csv";
+        String outputFilePath = outputDirPath + File.separator + outputFileName;
+        File outputDir = new File(outputDirPath);
+        if (!outputDir.exists() && !outputDir.mkdirs()) {
+            log.error("Failed to create output directory: {}", outputDirPath);
+            throw new RuntimeException("Failed to create output directory: " + outputDirPath);
+        }
 
-            // Write to CSV
-            writeToCsv(sortedResult, outputFilePath);
+        // Write to CSV
+        writeToCsv(sortedResult, outputFilePath);
 
-            return result;
+        return result;
     }
 
     private ReconciliationResultDto toDto(ReconciliationTransaction txn, String status, String description) {
