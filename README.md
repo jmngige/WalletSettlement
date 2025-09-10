@@ -17,7 +17,7 @@ against external CSV reports.
 ### 1. Clone the Repository
 
 ```bash
-[#git clone https://github.com/your-org/wallet-settlement.git](https://github.com/jmngige/WalletSettlement.git)
+git clone https://github.com/jmngige/WalletSettlement.git
 cd wallet-settlement
 ```
 
