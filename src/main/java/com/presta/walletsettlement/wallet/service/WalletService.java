@@ -127,10 +127,9 @@ public class WalletService {
     }
 
     public BalanceResponse getBalance(String id) {
-        log.info("wallet id {}", id);
         return walletRepository.findByWalletId(id)
                 .map(wallet ->
-                        new BalanceResponse(wallet.getId(), wallet.getBalance()))
+                        new BalanceResponse(wallet.getWalletId(), wallet.getBalance()))
                 .orElseThrow(() -> new WalletNotFoundException("Wallet not found"));
     }
 }

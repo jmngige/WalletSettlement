@@ -30,7 +30,7 @@ public class WalletController {
     @Operation(summary = "Top up a wallet", description = "Add funds to a wallet by ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully topped up wallet"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "409", description = "Transaction already processed"),
             @ApiResponse(responseCode = "404", description = "Wallet not found")
     })
     public ResponseEntity<TopUpResponse> topUp(@PathVariable("id") String id, @Valid @RequestBody TopUpRequest request) {
@@ -42,7 +42,7 @@ public class WalletController {
     @Operation(summary = "Consume from a wallet", description = "Deduct funds from a wallet by ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Successfully consumed from wallet"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data or insufficient balance"),
+            @ApiResponse(responseCode = "402", description = "Insufficient balance"),
             @ApiResponse(responseCode = "404", description = "Wallet not found")
     })
     public ResponseEntity<ConsumeResponse> consume(@PathVariable("id") String id, @Valid @RequestBody ConsumeRequest request) {

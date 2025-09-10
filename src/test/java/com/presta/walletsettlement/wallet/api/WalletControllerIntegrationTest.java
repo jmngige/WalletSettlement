@@ -142,9 +142,9 @@ class WalletControllerIntegrationTest {
 
     @Test
     void getBalanceEndpoint_returnsBalance() throws Exception {
-        mockMvc.perform(get("/wallets/{id}/balance", savedWallet.getId()))
+        mockMvc.perform(get("/wallets/{id}/balance", savedWallet.getWalletId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.walletId").value(savedWallet.getId()))
+                .andExpect(jsonPath("$.walletId").value(savedWallet.getWalletId()))
                 .andExpect(jsonPath("$.balance").value(100.00));
     }
 

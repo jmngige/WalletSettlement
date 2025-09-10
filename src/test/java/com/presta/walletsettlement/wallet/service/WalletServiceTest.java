@@ -156,7 +156,7 @@ class WalletServiceTest {
         when(walletRepository.findByWalletId("WLT-001")).thenReturn(java.util.Optional.of(wallet));
         var resp = walletService.getBalance("WLT-001");
         assertNotNull(resp);
-        assertEquals(1L, resp.walletId());
+        assertEquals("WLT-001", resp.walletId());
         assertEquals(0, resp.balance().compareTo(new BigDecimal("100.00")));
     }
 

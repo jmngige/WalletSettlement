@@ -2,6 +2,8 @@ package com.presta.walletsettlement.reconciliation.api;
 
 import com.presta.walletsettlement.reconciliation.domain.ReconciliationResultDto;
 import com.presta.walletsettlement.reconciliation.service.ReconciliationService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,7 +14,8 @@ import java.util.List;
 
 
 @RestController
-@RequestMapping("api/v1/reconciliation/")
+@RequestMapping("api/v1/reconciliation")
+@Tag(name = "Reconciliation API", description = "API for reconciliation operations")
 public class ReconciliationController {
 
     private final ReconciliationService reconciliationService;
@@ -22,7 +25,7 @@ public class ReconciliationController {
     }
 
     @GetMapping("report")
-    public ResponseEntity<List<ReconciliationResultDto>> report(@RequestParam String date) {
+    public ResponseEntity<List<ReconciliationResultDto>> report( @Parameter(description = "Date in YYYY-MM-DD format") @RequestParam String date) {
         return ResponseEntity.ok(reconciliationService.reconcile(date));
     }
 

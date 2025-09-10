@@ -10,7 +10,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,26 +29,29 @@ class CsvReportReaderTest {
 
 
     @Test
-    void readCsvReport_parsesFileAndResolvesTypes() throws Exception {
-        // Arrange
+    void readCsvReport_parsesFileAndResolvesTypes_fromClasspath() throws Exception {
+        // create reconfiles directory on the test classpath (target/test-classes/reconfiles)
+        Path reconfilesDir = Paths.get("target", "test-classes", "reconfiles");
+        Files.createDirectories(reconfilesDir);
+
+        String fileName = "transaction_report_2025-09-05.csv";
+        Path file = reconfilesDir.resolve(fileName);
+
         String csv = "transactionId,amount\n" +
                      "ref-MP-001,100\n" +
                      "ref-CRB-001,50\n" +
                      "ref-KYC-001,75\n";
 
-        File file = tempDir.resolve("transaction_report_2025-09-05.csv").toFile();
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
+
+        try (BufferedWriter bw = Files.newBufferedWriter(file, StandardCharsets.UTF_8,
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             bw.write(csv);
         }
 
-        Field filePathField = CsvReportReader.class.getDeclaredField("filePath");
-        filePathField.setAccessible(true);
-        filePathField.set(reader, tempDir.toString() + File.separator);
+        Map<String, ReconciliationTransaction> map = reader.readCsvReport(fileName);
 
-        Map<String, ReconciliationTransaction> map = reader.readCsvReport(file.getName());
         assertThat(map).hasSize(3);
         assertThat(map).containsKeys("ref-MP-001", "ref-CRB-001","ref-KYC-001");
-
         assertThat(map.get("ref-MP-001").getAmount()).isEqualByComparingTo(new BigDecimal("100"));
         assertThat(map.get("ref-MP-001").getType()).isEqualTo("MPESA_TOPUP");
         assertThat(map.get("ref-CRB-001").getType()).isEqualTo("CRB_CHECK");
